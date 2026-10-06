@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Spesial Untuk Destin ❤</title>
   <style>
     * {
@@ -11,13 +11,15 @@
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    body {
-      height: 100vh;
+    html, body {
+      height: 100%;
+      height: 100dvh; /* Menyesuaikan layar HP secara dinamis */
       width: 100vw;
       overflow: hidden;
-      background-color: #8e9095;
+      background-color: #1a1a1a;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -28,13 +30,18 @@
       position: relative;
       width: 100%;
       height: 100%;
+      height: 100dvh;
       max-width: 430px;
       background: url('wallpaper.jpg') center/cover no-repeat;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: 60px 20px 45px 20px;
+      /* Padding aman dari notch dan toolbar HP */
+      padding-top: max(50px, env(safe-area-inset-top));
+      padding-bottom: max(55px, env(safe-area-inset-bottom));
+      padding-left: 20px;
+      padding-right: 20px;
       box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
     }
 
@@ -45,7 +52,9 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(142, 144, 149, 0.96);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -60,7 +69,7 @@
       background: #1e1e1e;
       border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
       animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
@@ -118,9 +127,10 @@
 
     /* Lockscreen */
     .lockscreen-header {
+      width: 100%;
       text-align: center;
       color: #ffffff;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       z-index: 10;
     }
 
@@ -142,12 +152,14 @@
       width: 100%;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       border-radius: 16px;
       padding: 14px 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
       margin-top: 25px;
       display: none;
       animation: slideDown 0.4s ease-out forwards;
+      text-align: left;
       z-index: 10;
     }
 
@@ -189,23 +201,33 @@
       font-size: 13px;
       color: #333333;
       line-height: 1.45;
+      white-space: pre-line;
     }
 
+    /* Tombol Aksi di Layar */
     .action-btn {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       color: #111111;
       border: none;
-      padding: 9px 24px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
+      padding: 12px 32px;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      z-index: 20;
+      margin-bottom: 10px;
+      animation: pulse 1.8s infinite ease-in-out;
+      transition: transform 0.15s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
     }
 
     .action-btn:active {
-      transform: scale(0.96);
+      transform: scale(0.95);
       background: #ffffff;
     }
   </style>
@@ -217,7 +239,8 @@
     <source src="musik.mp3" type="audio/mp3">
   </audio>
 
-  <div class="screen">
+  <!-- Layar Interaktif: Klik di mana saja pada wallpaper juga melanjutkan pesan -->
+  <div class="screen" onclick="handleScreenTap(event)">
     <div class="lockscreen-header">
       <div class="lock-time" id="lock-time">13:00</div>
       <div class="lock-date" id="lock-date">Saturday, 3 October 2026</div>
@@ -237,7 +260,8 @@
       </div>
     </div>
 
-    <button class="action-btn" id="main-btn" onclick="handleButtonClick()" style="display: none;">Klik Aku</button>
+    <!-- Tombol Bawah yang sudah dinaikkan posisinya -->
+    <button class="action-btn" id="main-btn" onclick="handleButtonClick(event)" style="display: none;">Klik Aku ❤️</button>
   </div>
 
   <!-- Pop-up Modal Container -->
@@ -256,19 +280,21 @@
     const music = document.getElementById("bg-music");
     let isMusicPlaying = false;
 
-    // Konfigurasi Loop Audio
-    music.loop = true;
-    music.addEventListener("ended", function () {
-      this.currentTime = 0;
-      this.play();
-    }, false);
+    // Pengaturan Loop Audio
+    if (music) {
+      music.loop = true;
+      music.addEventListener("ended", function () {
+        this.currentTime = 0;
+        this.play().catch(() => {});
+      }, false);
+    }
 
     function startMusic() {
-      if (!isMusicPlaying) {
+      if (music && !isMusicPlaying) {
         music.play().then(() => {
           isMusicPlaying = true;
         }).catch(err => {
-          console.log("Audio play error:", err);
+          console.warn("Autoplay terhalang kebijakan browser HP:", err);
         });
       }
     }
@@ -344,7 +370,7 @@
       mainBtn.style.display = "block";
     }
 
-    // Pesan yang sudah diperbaiki tanda kutipnya
+    // Pesan notifikasi dengan penutup backtick yang benar
     const messages = [
       `Haii Cantik!\nPliss jangan ngambek lagi nah sayang :( `,
       `ILYSM mwahhhh,`,
@@ -353,7 +379,20 @@
 
     let notifStep = 0;
 
-    function handleButtonClick() {
+    // Trigger tombol
+    function handleButtonClick(event) {
+      if (event) event.stopPropagation();
+      processNextStep();
+    }
+
+    // Trigger saat pengguna mengetuk layar wallpaper mana pun
+    function handleScreenTap(event) {
+      if (overlay.style.display === "none") {
+        processNextStep();
+      }
+    }
+
+    function processNextStep() {
       if (notifStep === 0) {
         notifCard.style.display = "block";
         notifText.innerText = messages[0];
@@ -411,6 +450,7 @@
       `;
     }
 
+    // Jalankan dialog pertama saat halaman dimuat
     renderDialog(dialogSteps[0]);
   </script>
 </body>
